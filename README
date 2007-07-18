@@ -1,0 +1,121 @@
+Xremote
+-------
+
+This little utility is able to grab inputs from local X server
+to forward them on a remote X server.
+
+It uses IPv4/UDP sockets, XTest extension and Xlib. For
+encryption it uses SHA-256 hash and AES-256 cipher.
+
+
+Author
+------
+
+Antony Ducommun (nitro.tm@gmail.com)
+
+
+Installation
+------------
+
+    make clean
+    make
+    make install
+
+The default isntallation directory is :
+
+    /usr/local/bin
+
+See the makefile. Or just copy xremote by yourself.
+
+
+Usage
+-----
+
+    xremote [-p] --client serverhost [serverport]
+    xremote [-p] --server listenhost [listenport]
+
+The -p argument means that the encryption password will be
+provided from standard input stream. The password is the
+first line of text found in input stream. For exemple :
+
+    cat mypwd.txt | xremote -p --client 192.168.1.1
+
+When the pointer reach the left or right border of the local
+display, the client try to contact the server. If the server
+answer correctely, the local input devices are actively
+grabbed and every key/pointer event is sent to the server.
+The server repeat key/pointer events as they are received.
+If the pointer reach the left or right border of the remtoe
+display, the server contact the client to release the grab
+and the client comes back to a local input mode.
+
+For exemple left and right borders means with three screens :
+
+       DISPLAY
+    -------------
+    | 0 | 1 | 2 |
+    -------------
+
+The left border is the x coordinate 0 on screen 0, the right
+border is x coordinate (width-1) on screen 2.
+
+The pointer switching works as described here :
+
+        LOCAL
+       DISPLAY
+    -------------
+    | 0 | 1 | 2 |
+    -------------
+
+       REMOTE
+       DISPLAY
+    -------------
+    | 0 | 1 | 2 |
+    -------------
+
+L0 -> L1 -> L2 -> R0 -> R1 -> R2 -> L0
+L0 <- L1 <- L2 <- R0 <- R1 <- R2 <- L0
+
+
+Default parameters
+------------------
+
+The client-side UDP port is fixed to :
+
+    #define XREMOTE_CLIENT_PORT  9875	
+
+The server-side UDP port is fixed to :
+
+    #define XREMOTE_SERVER_PORT  9876
+
+The default client-side listen host is fixed to :
+
+    #define XREMOTE_BIND_HOST    "0.0.0.0"
+
+
+License
+-------
+
+Free of use for any purpose ;)
+
+
+Notice
+------
+
+This software has not been tested on a wide range of systems,
+and may contains critical bugs. Use it at your own risk *_*
+
+
+TODO
+----
+
+- [high] Use keysym (more portable) instead of keycode.
+
+- [high] Merge switchscreen utility with this one to quickly
+         change active screen among local and remote displays.
+
+- [high] Synchronize client screensaver with servers
+
+- [low] Allows multiple servers per client
+
+- [low] Provide a way to get/configure screen layouts
