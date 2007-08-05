@@ -5,9 +5,9 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "xremote.h"
-#include "thirdparty/sha2.h"
-#include "thirdparty/aes.h"
+#include "../xremote.h"
+#include "../thirdparty/sha2.h"
+#include "../thirdparty/aes.h"
 
 
 XRNET::XRNET(const string &localHost, in_port_t localPort, const string &displayName) : XRWINDOW(displayName), encrypt(false), s(-1), primaryBufferEvent(NULL), secondaryBufferEvent(NULL), clipboardBufferEvent(NULL), lock(), localHost(localHost), localAddress(INADDR_NONE), localPort(localPort), remoteAddress(INADDR_NONE), remotePort(0) {

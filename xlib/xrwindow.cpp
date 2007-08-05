@@ -5,7 +5,7 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "xremote.h"
+#include "../xremote.h"
 
 
 XRWINDOW::XRWINDOW(const string &displayName) : XRDISPLAY(displayName), grab(false), window(None), cursor(None), atomId(1) {

@@ -157,14 +157,17 @@ public:
 
 // Local includes
 #include "xrevents.h"
-#include "xrscreen.h"
-#include "xrdisplay.h"
-#include "xrwindow.h"
-#include "xrnet.h"
-#include "xrclient.h"
-#include "xrservercon.h"
-#include "xrserver.h"
-#include "xrservertest.h"
+#include "xlib/xrscreen.h"
+#include "xlib/xrdisplay.h"
+#include "xlib/xrwindow.h"
+#include "net/xrnet.h"
+
+#include "net/xrnetbase.h"
+#include "net/xrnetcrypt.h"
+#include "net/xrnetudp.h"
+//#include "client/xrclient.h"
+//#include "server/xrservercon.h"
+//#include "server/xrserver.h"
 
 
 #endif //_XREMOTE_H_INCLUDE_

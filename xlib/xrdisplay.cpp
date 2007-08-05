@@ -5,7 +5,7 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "xremote.h"
+#include "../xremote.h"
 
 
 XRDISPLAY::XRDISPLAY(const string &displayName) : displayName(displayName), screenCount(0) {

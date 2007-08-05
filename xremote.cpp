@@ -6,6 +6,10 @@
  * license : free of use for any purpose ;)
  */
 #include "xremote.h"
+#include "client/xrclient.h"
+#include "server/xrservercon.h"
+#include "server/xrserver.h"
+#include "server/xrservertest.h"
 
 
 XRNET *xr = NULL;

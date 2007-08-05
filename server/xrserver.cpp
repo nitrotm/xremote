@@ -5,7 +5,9 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "xremote.h"
+#include "../xremote.h"
+#include "xrservercon.h"
+#include "xrserver.h"
 
 
 XRSERVER::XRSERVER(const string &localHost, in_port_t localPort, const string &displayName) : XRNET(localHost, localPort, displayName), allows(false), bufferCount(0) {

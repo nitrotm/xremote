@@ -5,7 +5,10 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "xremote.h"
+#include "../xremote.h"
+#include "xrservercon.h"
+#include "xrserver.h"
+#include "xrservertest.h"
 
 
 XRSERVERTEST::XRSERVERTEST(const string &localHost, in_port_t localPort, const string &displayName) : XRSERVER(localHost, localPort, displayName), supported(false) {

@@ -2,15 +2,18 @@ SRC= \
 	thirdparty/aes.c \
 	thirdparty/sha2.c \
 	xremote.cpp \
-    xrscreen.cpp \
-	xrdisplay.cpp \
 	xrevents.cpp \
-	xrwindow.cpp \
-	xrnet.cpp \
-	xrclient.cpp \
-	xrservercon.cpp \
-	xrserver.cpp \
-	xrservertest.cpp
+    xlib/xrscreen.cpp \
+	xlib/xrdisplay.cpp \
+	xlib/xrwindow.cpp \
+	net/xrnet.cpp \
+	net/xrnetbase.cpp \
+	net/xrnetcrypt.cpp \
+	net/xrnetudp.cpp \
+	client/xrclient.cpp \
+	server/xrservercon.cpp \
+	server/xrserver.cpp \
+	server/xrservertest.cpp
 
 CC=g++
 CC_FLAGS=-O3 -g -Wall -L /usr/X11R6/lib -lX11 -lXtst -lpthread #-lXext

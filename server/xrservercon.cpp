@@ -5,7 +5,8 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "xremote.h"
+#include "../xremote.h"
+#include "xrservercon.h"
 
 
 XRSERVERCON::XRSERVERCON() : remoteAddress(INADDR_NONE), remotePort(0), alive(time(NULL)), endY(0), endFlags(0) {
