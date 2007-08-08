@@ -1,5 +1,5 @@
 /**
- * Xremote - client/server udp socket
+ * Xremote - client/server low-level common api
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
@@ -9,40 +9,93 @@
 #define _XRNETBASE_H_INCLUDE_
 
 
-#define XREMOTE_PACKET_SIZE 32
+class XRNETBASE;
+typedef XRNETBASE *PXRNETBASE;
+
+class XRNETLISTENER;
+typedef XRNETLISTENER *PXRNETLISTENER;
 
 
 /**
- * Raw network packet structure (XREMOTE_PACKET_SIZE bytes of data)
+ * Raw network buffer
  *
  */
-class XRNETRAWPACKET {
+class XRNETBUFFER {
 protected:
-	time_t			timestamp;
-	in_addr_t		localAddress;
-	in_port_t		localPort;
-	in_addr_t		remoteAddress;
-	in_port_t		remotePort;
-	unsigned char	buffer[XREMOTE_PACKET_SIZE];
+	int				size;
+	unsigned char	*buffer;	
 
 
 public:
-	XRNETRAWPACKET(in_addr_t localAddress, in_port_t localPort, in_addr_t remoteAddress, in_port_t remotePort, unsigned char *buffer);
-	XRNETRAWPACKET(const XRNETRAWPACKET &ref);
-	virtual ~XRNETRAWPACKET();
+	XRNETBUFFER();
+	XRNETBUFFER(const int size);
+	XRNETBUFFER(const int size, const void *buffer);
+	XRNETBUFFER(const XRNETBUFFER &ref);
+	virtual ~XRNETBUFFER();
 
-	virtual unsigned char * getBuffer();
-	virtual int getSize();
+	const XRNETBUFFER & operator =(const XRNETBUFFER &ref);
+	const unsigned char & operator [](int offset) const;
 
-	const time_t & getTimestamp();
+	unsigned char * getPtr() const;
+	unsigned char * getPtr(const int offset) const;
+	int getSize() const;
 
-	const in_addr_t & getLocalAddress();
-	const in_port_t & getLocalPort();
+	void getData(void *buffer) const;
+	void getData(const int size, void *buffer) const;
+	void getData(const int offset, const int size, void *buffer) const;
 
-	const in_addr_t & getRemoteAddress();
-	const in_port_t & getRemotePort();
+	void setData(const void *buffer);
+	void setData(const int size, const void *buffer);
+	void setData(const int offset, const int size, const void *buffer);
 };
-typedef XRNETRAWPACKET *PXRNETRAWPACKET;
+
+
+/**
+ * Raw network packet structure
+ *
+ */
+class XRNETPACKETMETA {
+protected:
+	time_t		timestamp;
+	in_addr_t	localAddress;
+	in_port_t	localPort;
+	in_addr_t	remoteAddress;
+	in_port_t	remotePort;
+
+
+public:
+	XRNETPACKETMETA(const in_addr_t &localAddress, const in_port_t localPort, const in_addr_t &remoteAddress, const in_port_t remotePort);
+	XRNETPACKETMETA(const XRNETPACKETMETA &ref);
+	virtual ~XRNETPACKETMETA();
+
+	const time_t & getTimestamp() const;
+
+	const in_addr_t & getLocalAddress() const;
+	const in_port_t & getLocalPort() const;
+
+	const in_addr_t & getRemoteAddress() const;
+	const in_port_t & getRemotePort() const;
+};
+
+
+/**
+ * Raw network packet structure
+ *
+ */
+class XRNETPACKET : public XRNETPACKETMETA {
+protected:
+	XRNETBUFFER	buffer;
+
+
+public:
+	XRNETPACKET(const in_addr_t &localAddress, const in_port_t localPort, const in_addr_t &remoteAddress, const in_port_t remotePort, const XRNETBUFFER &buffer);
+	XRNETPACKET(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer);
+	XRNETPACKET(const XRNETPACKET &ref);
+	virtual ~XRNETPACKET();
+
+	const XRNETBUFFER & getBuffer() const;
+	void setBuffer(const XRNETBUFFER &buffer);
+};
 
 
 /**
@@ -51,18 +104,23 @@ typedef XRNETRAWPACKET *PXRNETRAWPACKET;
  */
 class XRNETLISTENER {
 protected:
-	XRNETLISTENER *listener;
+	PXRNETLISTENER lower;
+	PXRNETLISTENER upper;
 
 
 public:
-	XRNETLISTENER(XRNETLISTENER *listener);
+	XRNETLISTENER();
 	virtual ~XRNETLISTENER();
 
+	PXRNETLISTENER getLower() const;
+	PXRNETLISTENER getUpper() const;
+	void setLower(PXRNETLISTENER lower);
+	void setUpper(PXRNETLISTENER upper);
 
-	virtual bool onReceivePacket(PXRNETRAWPACKET packet);
-	virtual PXRNETRAWPACKET onSendPacket(PXRNETRAWPACKET packet);
+	virtual int getHeaderSize() const = 0;
+	virtual bool onReceivePacket(const XRNETPACKET &packet);
+	virtual bool onSendPacket(XRNETPACKET &packet);
 };
-typedef XRNETLISTENER *PXRNETLISTENER;
 
 
 /**
@@ -71,31 +129,33 @@ typedef XRNETLISTENER *PXRNETLISTENER;
  */
 class XRNETBASE {
 private:
-	list<PXRNETRAWPACKET>	sendBuffer;
-	PXRNETLISTENER			listener;
+	XRLOCK				lock;
+	list<XRNETPACKET>	sendBuffer;
 
 
 protected:
-	XRLOCK lock;
+	PXRNETLISTENER	lower;
+	PXRNETLISTENER	upper;
 
-	virtual int receiveOne(PXRNETRAWPACKET *packet, long timeout) = 0;
-	virtual int sendOne(PXRNETRAWPACKET packet, long timeout) = 0;
+	virtual int receiveOne(XRNETPACKET **packet, const long timeout) = 0;
+	virtual int sendOne(const XRNETPACKET &packet, const long timeout) = 0;
 
 
 public:
-	XRNETBASE(PXRNETLISTENER listener);
+	XRNETBASE(PXRNETLISTENER lower, PXRNETLISTENER upper);
 	XRNETBASE(const XRNETBASE &ref);
 	virtual ~XRNETBASE();
 
+	virtual int getRawSize() const = 0;
 
 	virtual bool createSocket() = 0;
 	virtual bool destroySocket() = 0;
 
-	virtual bool receiveAll(long timeout = XREMOTE_READ_TIMEOUT);
+	virtual bool receiveAll(const long timeout = XREMOTE_READ_TIMEOUT);
 
-	virtual bool send(PXRNETRAWPACKET packet);
-	virtual bool sendNow(PXRNETRAWPACKET packet);
-	virtual bool sendAll(long timeout = XREMOTE_WRITE_TIMEOUT);
+	virtual bool send(const XRNETPACKET &packet);
+	virtual bool sendNow(const XRNETPACKET &packet);
+	virtual bool sendAll(const long timeout = XREMOTE_WRITE_TIMEOUT);
 };
 
 

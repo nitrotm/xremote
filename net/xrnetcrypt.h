@@ -1,5 +1,5 @@
 /**
- * Xremote - client/server udp socket
+ * Xremote - raw packet aes encryption
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
@@ -10,41 +10,23 @@
 
 
 /**
- * AES-256 encrypted network packet structure (XREMOTE_PACKET_SIZE bytes of data)
- *
- */
-class XRNETAESPACKET : public XRNETRAWPACKET {
-protected:
-	bool				encrypted;
-	unsigned char	key[32];
-
-
-public:
-	XRNETAESPACKET(const XRNETRAWPACKET &packet, bool encrypt, unsigned char key[32]);
-	virtual ~XRNETAESPACKET();
-};
-typedef XRNETAESPACKET *PXRNETAESPACKET;
-
-
-/**
- * XRemote network packet empty listener
+ * XRemote network packet aes encryption listener
  *
  */
 class XRNETCRYPTLISTENER : public XRNETLISTENER {
 protected:
 	unsigned char	key[32];
-	bool				encrypt;
+	bool				enabled;
 
 
 public:
-	XRNETCRYPTLISTENER(XRNETLISTENER *listener, const string &password);
+	XRNETCRYPTLISTENER(const string &password);
 	virtual ~XRNETCRYPTLISTENER();
 
-
-	virtual bool onReceivePacket(PXRNETRAWPACKET packet);
-	virtual PXRNETRAWPACKET onSendPacket(PXRNETRAWPACKET packet);
+	virtual int getHeaderSize() const;
+	virtual bool onReceivePacket(const XRNETPACKET &packet);
+	virtual bool onSendPacket(XRNETPACKET &packet);
 };
-typedef XRNETCRYPTLISTENER *PXRNETCRYPTLISTENER;
 
 
 #endif //_XRNETCRYPT_H_INCLUDE_

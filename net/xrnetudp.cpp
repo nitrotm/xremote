@@ -1,5 +1,5 @@
 /**
- * Xremote - client/server commons
+ * Xremote - client/server low-level udp socket
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
@@ -8,8 +8,9 @@
 #include "../xremote.h"
 
 
-XRNETUDP::XRNETUDP(PXRNETLISTENER listener, const string &localHost, in_port_t localPort) :
-	XRNETBASE(listener),
+XRNETUDP::XRNETUDP(PXRNETLISTENER lower, PXRNETLISTENER upper, const int packetSize, const string &localHost, const in_port_t localPort) :
+	XRNETBASE(lower, upper),
+	packetSize(packetSize),
 	localHost(localHost),
 	localAddress(INADDR_NONE),
 	localPort(localPort),
@@ -18,8 +19,9 @@ XRNETUDP::XRNETUDP(PXRNETLISTENER listener, const string &localHost, in_port_t l
 	s(-1) {
 }
 
-XRNETUDP::XRNETUDP(PXRNETLISTENER listener, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort) :
-	XRNETBASE(listener),
+XRNETUDP::XRNETUDP(PXRNETLISTENER lower, PXRNETLISTENER upper, const int packetSize, const string &localHost, const in_port_t localPort, const string &remoteHost, const in_port_t remotePort) :
+	XRNETBASE(lower, upper),
+	packetSize(packetSize),
 	localHost(localHost),
 	localAddress(INADDR_NONE),
 	localPort(localPort),
@@ -45,9 +47,11 @@ XRNETUDP::~XRNETUDP() {
 }
 
 
-bool XRNETUDP::createSocket() {
-	XRLOCKER locker(&this->lock);
+int XRNETUDP::getRawSize() const {
+	return this->packetSize - this->getRawSize(this->lower);
+}
 
+bool XRNETUDP::createSocket() {
 	if (!this->destroySocket()) {
 		return false;
 	}
@@ -102,8 +106,6 @@ bool XRNETUDP::createSocket() {
 }
 
 bool XRNETUDP::destroySocket() {
-	XRLOCKER locker(&this->lock);
-
 	if (this->s >= 0) {
 		close(this->s);
 		this->s = -1;
@@ -114,9 +116,7 @@ bool XRNETUDP::destroySocket() {
 }
 
 
-int XRNETUDP::receiveOne(PXRNETRAWPACKET *packet, long timeout) {
-	XRLOCKER locker(&this->lock);
-
+int XRNETUDP::receiveOne(XRNETPACKET **packet, const long timeout) {
 	*packet = NULL;
 	if (this->s < 0) {
 		return -1;
@@ -135,28 +135,32 @@ int XRNETUDP::receiveOne(PXRNETRAWPACKET *packet, long timeout) {
 		struct sockaddr_in	sin;
 		socklen_t			sinLength = sizeof(sin);
 		int					rb;
-		unsigned char		buffer[XREMOTE_PACKET_SIZE];
+		XRNETBUFFER			buffer(this->packetSize);
 
 		memset(&sin, 0, sizeof(sin));
-		rb = recvfrom(this->s, buffer, XREMOTE_PACKET_SIZE, 0, (struct sockaddr *)&sin, &sinLength);
-		if (rb != sizeof(XREMOTE_PACKET_SIZE)) {
-//			printf("rb=%d, from=%s !\n", rb, inet_ntoa(sin.sin_addr));
+		rb = recvfrom(this->s, buffer.getPtr(), this->packetSize, 0, (struct sockaddr *)&sin, &sinLength);
+		if (rb != this->packetSize) {
+			printf("rb=%d, from=%s !\n", rb, inet_ntoa(sin.sin_addr));
 			return -2;
 		}
 
+//		printf("some data are available ;) wooowwww\n");
+
 		// push packet on queue
-		*packet = new XRNETRAWPACKET(this->localAddress, this->localPort, sin.sin_addr.s_addr, sin.sin_port, buffer);
+		*packet = new XRNETPACKET(this->localAddress, this->localPort, sin.sin_addr.s_addr, sin.sin_port, buffer);
 		return 1;
 	}
+	printf("no data are available :(\n");
 	return 0;
 }
 
 
-int XRNETUDP::sendOne(PXRNETRAWPACKET packet, long timeout) {
-	XRLOCKER locker(&this->lock);
-
+int XRNETUDP::sendOne(const XRNETPACKET &packet, const long timeout) {
 	if (this->s < 0) {
 		return -1;
+	}
+	if (packet.getBuffer().getSize() != this->packetSize) {
+		return -10;
 	}
 
 	// send network packet
@@ -171,16 +175,29 @@ int XRNETUDP::sendOne(PXRNETRAWPACKET packet, long timeout) {
 		struct sockaddr_in sin;
 		int sb;
 
+//		printf("sending to %d:%d\n", packet.getRemoteAddress(), packet.getRemotePort());
+
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_family = AF_INET;
-		sin.sin_addr.s_addr = packet->getRemoteAddress();
-		sin.sin_port = htons(packet->getRemotePort());
-		sb = sendto(this->s, packet->getBuffer(), packet->getSize(), 0, (struct sockaddr *)&sin, sizeof(sin));
-		if (sb != packet->getSize()) {
-//			printf("sb=%d, to=%s !\n", sb, inet_ntoa(sin.sin_addr));
+		sin.sin_addr.s_addr = packet.getRemoteAddress();
+		sin.sin_port = htons(packet.getRemotePort());
+		sb = sendto(this->s, packet.getBuffer().getPtr(), this->packetSize, 0, (struct sockaddr *)&sin, sizeof(sin));
+		if (sb != this->packetSize) {
+			printf("sb=%d, to=%s !\n", sb, inet_ntoa(sin.sin_addr));
 			return -3;
 		}
 		return 1;
+	}
+	printf("cannot send to %d:%d\n", packet.getRemoteAddress(), packet.getRemotePort());
+	return 0;
+}
+
+int XRNETUDP::getRawSize(PXRNETLISTENER listener) const {
+	if (listener != NULL) {
+		if (listener->getUpper() != NULL) {
+			return listener->getHeaderSize() + this->getRawSize(listener->getUpper());
+		}
+		return listener->getHeaderSize();
 	}
 	return 0;
 }

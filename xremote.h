@@ -156,15 +156,17 @@ public:
 
 
 // Local includes
-#include "xrevents.h"
-#include "xlib/xrscreen.h"
-#include "xlib/xrdisplay.h"
-#include "xlib/xrwindow.h"
-#include "net/xrnet.h"
+//#include "xrevents.h"
+//#include "xlib/xrscreen.h"
+//#include "xlib/xrdisplay.h"
+//#include "xlib/xrwindow.h"
+//#include "net/xrnet.h"
 
 #include "net/xrnetbase.h"
-#include "net/xrnetcrypt.h"
 #include "net/xrnetudp.h"
+#include "net/xrnetcrypt.h"
+#include "net/xrnetchecksum.h"
+#include "net/xrnetstream.h"
 //#include "client/xrclient.h"
 //#include "server/xrservercon.h"
 //#include "server/xrserver.h"

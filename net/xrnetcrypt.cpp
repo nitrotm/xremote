@@ -1,5 +1,5 @@
 /**
- * Xremote - client/server commons
+ * Xremote - raw packet aes encryption
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
@@ -10,42 +10,7 @@
 #include "../thirdparty/aes.h"
 
 
-
-XRNETAESPACKET::XRNETAESPACKET(const XRNETRAWPACKET &packet, bool encrypt, unsigned char key[32]) :
-	XRNETRAWPACKET(packet),
-	encrypted(encrypt) {
-	aes_context ctx;
-	uint8 in[16];
-	uint8 out[16];
-
-	memcpy(this->key, key, 32);
-	memset(&ctx, 0, sizeof(aes_context));
-	aes_set_key(&ctx, this->key, sizeof(this->key) * 8);
-
-	for (int i = 0; i < XREMOTE_PACKET_SIZE; i += 16) {
-		int size = XREMOTE_PACKET_SIZE - i;
-		
-		if (size > 16) {
-			size = 16;
-		}
-		memset(in, 0, 16);
-		memcpy(in, &this->buffer[i], size);
-		if (encrypt) {
-			aes_encrypt(&ctx, in, out);
-		} else {
-			aes_decrypt(&ctx, in, out);
-		}
-		memcpy(&this->buffer[i], out, size);
-	}
-}
-
-XRNETAESPACKET::~XRNETAESPACKET() {
-}
-
-
-
-XRNETCRYPTLISTENER::XRNETCRYPTLISTENER(XRNETLISTENER *listener, const string &password) :
-	XRNETLISTENER(listener) {
+XRNETCRYPTLISTENER::XRNETCRYPTLISTENER(const string &password) : XRNETLISTENER() {
 	memset(this->key, 0, sizeof(this->key));
 	if (password.length() > 0) {
 		sha256_context ctx;
@@ -54,40 +19,79 @@ XRNETCRYPTLISTENER::XRNETCRYPTLISTENER(XRNETLISTENER *listener, const string &pa
 		sha256_starts(&ctx);
 		sha256_update(&ctx, (uint8*)password.c_str(), password.length());
 		sha256_finish(&ctx, this->key);
-		this->encrypt = true;
+		this->enabled = true;
 	} else {
-		this->encrypt = false;
+		this->enabled = false;
 	}
 }
 
 XRNETCRYPTLISTENER::~XRNETCRYPTLISTENER() {
 }
 
-bool XRNETCRYPTLISTENER::onReceivePacket(PXRNETRAWPACKET packet) {
-	if (this->encrypt) {
-		// decrypt packet
-		PXRNETRAWPACKET decryptedPacket = new XRNETAESPACKET(*packet, false, this->key);
+int XRNETCRYPTLISTENER::getHeaderSize() const {
+	return 0;
+}
 
-		if (XRNETLISTENER::onReceivePacket(decryptedPacket)) {
-			delete decryptedPacket;
-			return true;
+bool XRNETCRYPTLISTENER::onReceivePacket(const XRNETPACKET &packet) {
+	if (this->enabled) {
+		const XRNETBUFFER & inBuffer = packet.getBuffer();
+
+		if (inBuffer.getSize() % 16 != 0) {
+			printf("packet size is not rounded to 16 bytes (%d bytes)\n", inBuffer.getSize());
+			return false;
 		}
-		delete decryptedPacket;
-		return false;
+
+		// setup encryption key
+		aes_context ctx;
+
+		memset(&ctx, 0, sizeof(aes_context));
+		aes_set_key(&ctx, this->key, sizeof(this->key) * 8);
+
+		// decrypt buffer
+		XRNETBUFFER outBuffer(inBuffer.getSize());
+
+		for (int i = 0; i < inBuffer.getSize(); i += 16) {
+			uint8 in[16];
+			uint8 out[16];
+
+			memset(in, 0, 16);
+			inBuffer.getData(i, 16, in);
+			aes_decrypt(&ctx, in, out);
+			outBuffer.setData(i, 16, out);
+		}
+		return XRNETLISTENER::onReceivePacket(XRNETPACKET(packet, outBuffer));
 	}
 	return XRNETLISTENER::onReceivePacket(packet);
 }
 
-PXRNETRAWPACKET XRNETCRYPTLISTENER::onSendPacket(PXRNETRAWPACKET packet) {
-	packet = XRNETLISTENER::onSendPacket(packet);
-	if (packet != NULL) {
-		if (this->encrypt) {
-			// encrypt packet
-			PXRNETRAWPACKET encryptedPacket = new XRNETAESPACKET(*packet, true, this->key);
+bool XRNETCRYPTLISTENER::onSendPacket(XRNETPACKET &packet) {
+	if (this->enabled) {
+		const XRNETBUFFER & inBuffer = packet.getBuffer();
 
-			delete packet;
-			return encryptedPacket;
+		if (inBuffer.getSize() % 16 != 0) {
+			printf("packet size is not rounded to 16 bytes (%d bytes)\n", inBuffer.getSize());
+			return false;
 		}
+
+		// setup encryption key
+		aes_context ctx;
+
+		memset(&ctx, 0, sizeof(aes_context));
+		aes_set_key(&ctx, this->key, sizeof(this->key) * 8);
+
+		// encrypt buffer
+		XRNETBUFFER outBuffer(inBuffer.getSize());
+
+		for (int i = 0; i < inBuffer.getSize(); i += 16) {
+			uint8 in[16];
+			uint8 out[16];
+
+			memset(in, 0, 16);
+			inBuffer.getData(i, 16, in);
+			aes_encrypt(&ctx, in, out);
+			outBuffer.setData(i, 16, out);
+		}
+		packet.setBuffer(outBuffer);
 	}
-	return packet;
+	return XRNETLISTENER::onSendPacket(packet);
 }
