@@ -168,7 +168,7 @@ bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event) {
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETKBDEVENT *event) {
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
-
+/*
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETBUFFEREVENT *event, const string &str) {
 	XRNETBUFFER buffer(sizeof(XRNETEVENT) + buffer.length());
 
@@ -176,7 +176,7 @@ bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETBUFFEREVENT *event, c
 	buffer.set(sizeof(XRNETEVENT), buffer.length(), str.c_str());
 	return this->send(meta, buffer);
 }
-
+*/
 
 bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer) {
 	XRLOCKER locker(&this->lock);
@@ -257,7 +257,7 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 		}
 		break;
 
-	case XREVENT_BUFFER:
+/*	case XREVENT_BUFFER:
 		if (this->isGrabbing()) {
 			XRNETBUFFEREVENT *bufferev = (XRNETBUFFEREVENT*)&header;
 			XRNETBUFFER data(bufferev->size);
@@ -280,7 +280,7 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 		} else {
 			printf("xremote: cannot process buffer event (not grabbed)!\n");
 		}
-		break;
+		break;*/
 
 	default:
 		printf("xremote: unknown message (%d)\n", header.type);
@@ -378,7 +378,7 @@ bool XRCLIENT::processXEvent(const XEvent &xev) {
 			}
 			break;
 
-		case SelectionNotify:
+/*		case SelectionNotify:
 			{
 				string selection = this->getSelection(xev.xselection.selection, xev.xselection.property);
 				int code = XRBUFFER_NONE;
@@ -403,12 +403,12 @@ bool XRCLIENT::processXEvent(const XEvent &xev) {
 				this->sendEvent(this->meta, &event, selection);
 				this->setSelection(xev.xselection.selection, "");
 			}
-			break;
+			break;*/
 		}
 	}
 
 	// process local clipboard events
-	switch (xev.type) {
+/*	switch (xev.type) {
 	case SelectionRequest:
 		this->sendSelectionNotify(xev);
 		break;
@@ -416,7 +416,7 @@ bool XRCLIENT::processXEvent(const XEvent &xev) {
 	case SelectionClear:
 		this->clearSelection(xev.xselectionclear.selection);
 		break;
-	}
+	}*/
 	return this->sendAll();
 }
 

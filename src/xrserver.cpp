@@ -54,10 +54,10 @@ bool XRSERVER::main() {
 	}
 
 	// start grab inputs
-	if (!this->grabInput()) {
+/*	if (!this->grabInput()) {
 		printf("xremote: error in grabInput()\n");
-//		return false;
-	}
+		return false;
+	}*/
 
 	// main loop
 	this->allows = true;
@@ -158,7 +158,7 @@ bool XRSERVER::sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event) {
 bool XRSERVER::sendEvent(const XRNETPACKETMETA &meta, XRNETKBDEVENT *event) {
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
-
+/*
 bool XRSERVER::sendEvent(const XRNETPACKETMETA &meta, XRNETBUFFEREVENT *event, const string &str) {
 	XRNETBUFFER buffer(sizeof(XRNETEVENT) + buffer.length());
 
@@ -166,7 +166,7 @@ bool XRSERVER::sendEvent(const XRNETPACKETMETA &meta, XRNETBUFFEREVENT *event, c
 	buffer.set(sizeof(XRNETEVENT), buffer.length(), str.c_str());
 	return this->send(meta, buffer);
 }
-
+*/
 
 bool XRSERVER::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer) {
 	XRLOCKER locker(&this->lock);
@@ -316,7 +316,7 @@ bool XRSERVER::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 		}
 		break;
 
-	case XREVENT_BUFFER:
+/*	case XREVENT_BUFFER:
 		if (it != this->clients.end()) {
 			XRNETBUFFEREVENT *bufferev = (XRNETBUFFEREVENT*)&header;
 			XRNETBUFFER data(bufferev->size);
@@ -337,7 +337,7 @@ bool XRSERVER::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 				break;
 			}
 		}
-		break;
+		break;*/
 
 	default:
 		printf("xremote: unknown message (%d)\n", header.type);
@@ -351,7 +351,7 @@ bool XRSERVER::processXEvent(const XEvent &xev) {
 	XRLOCKER locker(&this->lock);
 
 	// process clipboard events
-	switch (xev.type) {
+/*	switch (xev.type) {
 	case SelectionNotify:
 		{
 			string selection = this->getSelection(xev.xselection.selection, xev.xselection.property);
@@ -388,7 +388,7 @@ bool XRSERVER::processXEvent(const XEvent &xev) {
 	case SelectionClear:
 		this->clearSelection(xev.xselectionclear.selection);
 		break;
-	}
+	}*/
 	return this->sendAll();
 }
 
@@ -543,8 +543,8 @@ bool XRSERVER::release(int y, int flags) {
 	}
 
 	// start grab inputs
-	if (!this->grabInput()) {
+/*	if (!this->grabInput()) {
 		return false;
-	}
+	}*/
 	return true;
 }
