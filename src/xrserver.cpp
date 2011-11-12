@@ -85,6 +85,7 @@ bool XRSERVER::main() {
 			for (map<string, XRCLIENTREF>::iterator it = this->clients.begin(); it != this->clients.end(); ++it) {
 				if ((time(NULL) - it->second.alive) >= XREMOTE_DEAD_CHECK) {
 					XRNETNOTIFYEVENT event = {
+						this->meta.getLocalPort(),
 						XREVENT_RELEASE,
 						XRNOTIFY_NONE,
 						0
@@ -95,6 +96,7 @@ bool XRSERVER::main() {
 					this->clients.erase(it);
 				} else if ((time(NULL) - it->second.alive) >= XREMOTE_ALIVE_CHECK) {
 					XRNETNOTIFYEVENT event = {
+						this->meta.getLocalPort(),
 						XREVENT_ALIVE,
 						XRNOTIFY_NONE,
 						0

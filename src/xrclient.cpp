@@ -158,14 +158,17 @@ bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETEVENT *event) {
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETNOTIFYEVENT *event) {
+	printf("send[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->flags, event->y);
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event) {
+	printf("send[%s]: port=%d, type=ptr(%d), button=%d, x=%d, y=%d\n", meta.getRemoteHost().c_str(), event->type, event->port, event->button, event->x, event->y);
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETKBDEVENT *event) {
+	printf("send[%s]: port=%d, type=kbd(%d), keycode=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->keycode);
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 /*
@@ -186,9 +189,21 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 
 	buffer.get(0, sizeof(XRNETEVENT), &header);
 
+	switch (header.type) {
+	case XREVENT_ACQUIRE:
+	case XREVENT_RELEASE:
+	case XREVENT_ALIVE:
+		{
+			XRNETNOTIFYEVENT *notifyev = (XRNETNOTIFYEVENT*)&header;
+
+			printf("recv[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), notifyev->port, notifyev->type, notifyev->flags, notifyev->y);
+		}
+		break;
+	}
+
 	// check server address
 	if (meta.getRemoteAddress() != this->meta.getRemoteAddress() || header.port != this->meta.getRemotePort()) {
-		printf("xremote: invalid server address (%s)\n", meta.getRemoteHost().c_str());
+		printf("xremote: invalid server address (%s, %d)\n", meta.getRemoteHost().c_str(), header.port);
 		return false;
 	}
 	this->alive = time(NULL);
@@ -417,7 +432,7 @@ bool XRCLIENT::processXEvent(const XEvent &xev) {
 		this->clearSelection(xev.xselectionclear.selection);
 		break;
 	}*/
-	return this->sendAll();
+	return true;
 }
 
 
