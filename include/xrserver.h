@@ -49,7 +49,7 @@ protected:
 	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETNOTIFYEVENT *event);
 	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event);
 	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETKBDEVENT *event);
-	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETBUFFEREVENT *event, const string &buffer);
+//	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETBUFFEREVENT *event, const string &buffer);
 	virtual bool onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer);
 
 	virtual bool processXEvent(const XEvent &xev);
