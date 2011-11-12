@@ -13,7 +13,7 @@
 #include "xrclient.h"
 
 
-XRCLIENT::XRCLIENT(int packetSize, XRNETFILTER *first, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort, const string &displayName) : XRNETUDP(packetSize, first, localHost, localPort, remoteHost, remotePort), XRWINDOW(displayName), allows(false), alive(time(NULL)) {
+XRCLIENT::XRCLIENT(int packetSize, XRNETFILTER *first, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort, const string &displayName) : XRNETUDP(packetSize, first, localHost, localPort, remoteHost, remotePort), XRWINDOW(displayName), allows(false), alive(time(NULL)), lastCheck(time(NULL)) {
 }
 
 XRCLIENT::~XRCLIENT() {
@@ -65,30 +65,34 @@ bool XRCLIENT::main() {
 
 		// send alive messages
 		if (this->isGrabbing()) {
-			if ((time(NULL) - this->alive) >= XREMOTE_DEAD_CHECK) {
-				XRNETNOTIFYEVENT event = {
-					this->meta.getLocalPort(),
-					XREVENT_RELEASE,
-					XRNOTIFY_NONE,
-					0
-				};
+			if ((time(NULL) - this->lastCheck) >= XREMOTE_CHECK_FREQ) {
+				this->lastCheck = time(NULL);
 
-				this->sendEvent(this->meta, &event);
+				if ((time(NULL) - this->alive) >= XREMOTE_DEAD_CHECK) {
+					if (!this->release()) {
+						printf("xremote: error in release()\n");
+						code = false;
+					}
+					this->centerPointerOnScreen();
 
-				if (!this->release()) {
-					printf("xremote: error in release()\n");
-					code = false;
+					XRNETNOTIFYEVENT event = {
+						this->meta.getLocalPort(),
+						XREVENT_RELEASE,
+						XRNOTIFY_NONE,
+						0
+					};
+
+					this->sendEvent(this->meta, &event);
+				} else if ((time(NULL) - this->alive) >= XREMOTE_ALIVE_CHECK) {
+					XRNETNOTIFYEVENT event = {
+						this->meta.getLocalPort(),
+						XREVENT_ALIVE,
+						XRNOTIFY_NONE,
+						0
+					};
+
+					this->sendEvent(this->meta, &event);
 				}
-				this->centerPointerOnScreen();
-			} else if ((time(NULL) - this->alive) >= XREMOTE_ALIVE_CHECK) {
-				XRNETNOTIFYEVENT event = {
-					this->meta.getLocalPort(),
-					XREVENT_ALIVE,
-					XRNOTIFY_NONE,
-					0
-				};
-
-				this->sendEvent(this->meta, &event);
 			}
 		} else {
 			// check the pointer at the border of display
@@ -234,7 +238,7 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 		break;
 
 	case XREVENT_RELEASE:
-		if (this->isGrabbing()) {
+		{
 			XRNETNOTIFYEVENT *notifyev = (XRNETNOTIFYEVENT*)&header;
 
 			if ((notifyev->flags & XRNOTIFY_REPLY) != XRNOTIFY_REPLY) {
@@ -248,13 +252,11 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 				this->sendEvent(this->meta, &event);
 			}
 			this->release(notifyev->y, notifyev->flags);
-		} else {
-			printf("xremote: cannot process release event (not grabbed)!\n");
 		}
 		break;
 
 	case XREVENT_ALIVE:
-		if (this->isGrabbing()) {
+		{
 			XRNETNOTIFYEVENT *notifyev = (XRNETNOTIFYEVENT*)&header;
 
 			if ((notifyev->flags & XRNOTIFY_REPLY) != XRNOTIFY_REPLY) {
@@ -267,8 +269,6 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 
 				this->sendEvent(this->meta, &event);
 			}
-		} else {
-			printf("xremote: cannot process alive event (not grabbed)!\n");
 		}
 		break;
 

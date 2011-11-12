@@ -22,6 +22,7 @@ private:
 protected:
 	bool   allows;
 	time_t alive;
+	time_t lastCheck;
 
 	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETEVENT *event);
 	virtual bool sendEvent(const XRNETPACKETMETA &meta, XRNETNOTIFYEVENT *event);

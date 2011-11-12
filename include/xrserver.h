@@ -24,17 +24,19 @@ protected:
 	public:
 		XRNETPACKETMETA meta;
 		time_t          alive;
+		time_t          lastCheck;
 //		int             y;
 //		int             flags;
 
-		XRCLIENTREF() : alive(time(NULL)) { //, y(0), flags(XRNOTIFY_NONE) {
+		XRCLIENTREF() : alive(time(NULL)), lastCheck(time(NULL)) { //, y(0), flags(XRNOTIFY_NONE) {
 		}
-		XRCLIENTREF(const XRCLIENTREF &ref) : meta(ref.meta), alive(ref.alive) { //, y(ref.y), flags(ref.flags) {
+		XRCLIENTREF(const XRCLIENTREF &ref) : meta(ref.meta), alive(ref.alive), lastCheck(ref.lastCheck) { //, y(ref.y), flags(ref.flags) {
 		}
 
 		const XRCLIENTREF & operator =(const XRCLIENTREF &ref) {
 			this->meta = ref.meta;
 			this->alive = ref.alive;
+			this->lastCheck = ref.lastCheck;
 //			this->y = ref.y;
 //			this->flags = ref.flags;
 		}

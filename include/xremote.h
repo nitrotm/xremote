@@ -22,8 +22,9 @@
 #define XREMOTE_WRITE_TIMEOUT 1000      // write timeout (us)
 #define XREMOTE_BEGIN_TIMEOUT 10000     // client "begin" read timeout (us)
 
-#define XREMOTE_ALIVE_CHECK   5         // check alive every 5 s
-#define XREMOTE_DEAD_CHECK    7         // is dead after 7 s
+#define XREMOTE_CHECK_FREQ    1         // check status every 1 [s]
+#define XREMOTE_ALIVE_CHECK   5         // check alive every 5 [s]
+#define XREMOTE_DEAD_CHECK    15        // is dead after 15 [s]
 
 
 // system includes

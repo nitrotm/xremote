@@ -83,26 +83,30 @@ bool XRSERVER::main() {
 		// send alive messages
 		if (!this->isGrabbing()) {
 			for (map<string, XRCLIENTREF>::iterator it = this->clients.begin(); it != this->clients.end(); ++it) {
-				if ((time(NULL) - it->second.alive) >= XREMOTE_DEAD_CHECK) {
-					XRNETNOTIFYEVENT event = {
-						this->meta.getLocalPort(),
-						XREVENT_RELEASE,
-						XRNOTIFY_NONE,
-						0
-					};
+				if ((time(NULL) - it->second.lastCheck) >= XREMOTE_CHECK_FREQ) {
+					it->second.lastCheck = time(NULL);
 
-					this->sendEvent(it->second.meta, &event);
+					if ((time(NULL) - it->second.alive) >= XREMOTE_DEAD_CHECK) {
+						this->clients.erase(it);
 
-					this->clients.erase(it);
-				} else if ((time(NULL) - it->second.alive) >= XREMOTE_ALIVE_CHECK) {
-					XRNETNOTIFYEVENT event = {
-						this->meta.getLocalPort(),
-						XREVENT_ALIVE,
-						XRNOTIFY_NONE,
-						0
-					};
+						XRNETNOTIFYEVENT event = {
+							this->meta.getLocalPort(),
+							XREVENT_RELEASE,
+							XRNOTIFY_NONE,
+							0
+						};
+	
+						this->sendEvent(it->second.meta, &event);
+					} else if ((time(NULL) - it->second.alive) >= XREMOTE_ALIVE_CHECK) {
+						XRNETNOTIFYEVENT event = {
+							this->meta.getLocalPort(),
+							XREVENT_ALIVE,
+							XRNOTIFY_NONE,
+							0
+						};
 
-					this->sendEvent(it->second.meta, &event);
+						this->sendEvent(it->second.meta, &event);
+					}
 				}
 			}
 		}
