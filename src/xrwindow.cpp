@@ -5,7 +5,10 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "../xremote.h"
+#include "xremote.h"
+#include "xrscreen.h"
+#include "xrdisplay.h"
+#include "xrwindow.h"
 
 
 XRWINDOW::XRWINDOW(const string &displayName) : XRDISPLAY(displayName), grab(false), window(None), cursor(None), atomId(1) {
@@ -28,7 +31,7 @@ bool XRWINDOW::createWindow(int x, int y, int width, int height) {
 	}
 
 	// get screen
-	XRSCREEN	 screen(this->getCurrentScreen());
+	XRSCREEN screen(this->getCurrentScreen());
 
 	// build attributes
 	XSetWindowAttributes attrs;
@@ -265,6 +268,10 @@ bool XRWINDOW::processXEvent(const XEvent &xev) {
 	return false;
 }
 
+
+Atom XRWINDOW::getClipboardAtom() const {
+	return this->XA_CLIPBOARD;
+}
 
 void XRWINDOW::askSelection(Atom selection) {
 	char propertyName[256];

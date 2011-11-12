@@ -3,7 +3,7 @@
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
- * license : free of use for any purpose ;)
+ * license : free to use for any purpose ;)
  */
 #ifndef _XRSCREEN_H_INCLUDE_
 #define _XRSCREEN_H_INCLUDE_
@@ -16,10 +16,10 @@
 class XRSCREEN {
 protected:
 	Display *display;
-	Screen	*screen;
-	int		index;
-	int		width;
-	int		height;
+	Screen  *screen;
+	int     index;
+	int     width;
+	int     height;
 
 	void flush() const;
 

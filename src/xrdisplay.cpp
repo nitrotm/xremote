@@ -5,7 +5,9 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "../xremote.h"
+#include "xremote.h"
+#include "xrscreen.h"
+#include "xrdisplay.h"
 
 
 XRDISPLAY::XRDISPLAY(const string &displayName) : displayName(displayName), screenCount(0) {
@@ -59,7 +61,7 @@ XRSCREEN XRDISPLAY::getCurrentScreen() const {
 		int y = 0;
 
 		if (this->screens[i].getPointer(&child, &x, &y)) {
-			return screens[i];
+			return this->screens[i];
 		}
 	}
 	return XRSCREEN();
@@ -67,9 +69,7 @@ XRSCREEN XRDISPLAY::getCurrentScreen() const {
 
 
 void XRDISPLAY::flush() const {
-	XFlush(
-		this->display
-	);
+	XFlush(this->display);
 }
 
 string XRDISPLAY::getCutBuffer() const {

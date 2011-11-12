@@ -1,0 +1,5 @@
+/xremote
+/test-*
+/thirdparty/*.o
+/src/*.oxx
+

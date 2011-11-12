@@ -3,7 +3,7 @@
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
- * license : free of use for any purpose ;)
+ * license : free to use for any purpose ;)
  */
 #ifndef _XRWINDOW_H_INCLUDE_
 #define _XRWINDOW_H_INCLUDE_
@@ -15,18 +15,17 @@
  */
 class XRWINDOW : public XRDISPLAY {
 private:
-	bool			grab;
-	Window		window;
-	Cursor		cursor;
-	string		primaryTextSelection;
-	string		secondaryTextSelection;
-	string		clipboardTextSelection;
-	int			atomId;
+	bool   grab;
+	Window window;
+	Cursor cursor;
+	string primaryTextSelection;
+	string secondaryTextSelection;
+	string clipboardTextSelection;
+	int    atomId;
+	Atom   XA_CLIPBOARD;
 
 
 protected:
-	Atom XA_CLIPBOARD;
-
 	bool createWindow(int x, int y, int width, int height);
 	bool destroyWindow();
 
@@ -41,6 +40,8 @@ protected:
 	virtual bool processXEvent(const XEvent &xev);
 
 	bool centerPointerOnScreen();
+
+	Atom getClipboardAtom() const;
 
 	void askSelection(Atom selection);
 	string getSelection(Atom selection, Atom property) const;

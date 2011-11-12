@@ -5,7 +5,8 @@
  *
  * license : free of use for any purpose ;)
  */
-#include "../xremote.h"
+#include "xremote.h"
+#include "xrscreen.h"
 
 
 XRSCREEN::XRSCREEN() : display(NULL), screen(NULL), index(0), width(0), height(0) {

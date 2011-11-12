@@ -3,7 +3,7 @@
  *
  * \author Antony Ducommun (nitro.tm@gmail.com)
  *
- * license : free of use for any purpose ;)
+ * license : free to use for any purpose ;)
  */
 #ifndef _XRDISPLAY_H_INCLUDE_
 #define _XRDISPLAY_H_INCLUDE_
@@ -15,12 +15,10 @@
  */
 class XRDISPLAY {
 protected:
-	Display				*display;
-	string				displayName;
-	vector<XRSCREEN>		screens;
-	int					screenCount;
-
-	void flush() const;
+	Display          *display;
+	string           displayName;
+	vector<XRSCREEN> screens;
+	int              screenCount;
 
 
 public:
@@ -34,6 +32,8 @@ public:
 	int getScreenCount() const;
 	XRSCREEN getScreen(int screenIndex) const;
 	XRSCREEN getCurrentScreen() const;
+
+	void flush() const;
 
 	string getCutBuffer() const;
 	void setCutBuffer(const string &value);

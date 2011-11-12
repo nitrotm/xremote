@@ -6,32 +6,36 @@
  * license : free of use for any purpose ;)
  */
 #include "xremote.h"
-#include "client/xrclient.h"
-#include "server/xrservercon.h"
-#include "server/xrserver.h"
-#include "server/xrservertest.h"
+#include "xrscreen.h"
+#include "xrdisplay.h"
+#include "xrwindow.h"
+#include "xrnet.h"
+#include "xrclient.h"
+#include "xrserver.h"
 
 
-XRNET *xr = NULL;
+XRCLIENT *client = NULL;
+XRSERVER *server = NULL;
 
 
 void printUsage() {
-	printf("xremote - %s - by nitro.tm@gmail.com\n", XREMOTE_VERSION);
 	printf("usage: xremote [-p] --client serverhost [serverport]\n");
 	printf("       xremote [-p] --server listenhost [listenport]\n");
 }
 
 void shutdown(int sig) {
-	if (xr != NULL) {
-		xr->shutdown();
-		xr = NULL;
+	if (client != NULL) {
+		client->abort();
+		client = NULL;
+	}
+	if (server != NULL) {
+		server->abort();
+		server = NULL;
 	}
 }
 
 
 int main(int argc, char *argv[]) {
-	XRNET *localxr = NULL;
-
 	// get display name
 	char *displayName = getenv("DISPLAY");
 
@@ -41,6 +45,8 @@ int main(int argc, char *argv[]) {
 	}
 
 	// check command-line validity
+	printf("xremote - v%s - by nitro.tm@gmail.com\n", XREMOTE_VERSION);
+
 	if (argc < 3) {
 		printUsage();
 		return 1;
@@ -63,7 +69,6 @@ int main(int argc, char *argv[]) {
 			}
 			password += (char)c;
 		}
-//		printf("password=%s\n", password.c_str());
 
 		// check command-line validity
 		argi++;
@@ -79,6 +84,14 @@ int main(int argc, char *argv[]) {
 	signal(SIGTERM, shutdown);
 //	signal(SIGINT, shutdown);
 //	signal(SIGABRT, shutdown);
+
+	// prepare filter
+	XRNETCRYPTFILTER cryptFilter(password);
+	XRNETFILTER *filter = NULL;
+
+	if (password.length() > 0) {
+		filter = &cryptFilter;
+	}
 
 	// spawn client or server
 	if (strcmp(argv[argi], "--client") == 0) {
@@ -97,7 +110,15 @@ int main(int argc, char *argv[]) {
 		}
 
 		// setup xremote client
-		localxr = xr = new XRCLIENT(XREMOTE_BIND_HOST, XREMOTE_CLIENT_PORT, remotehost, remoteport, displayName);
+		XRCLIENT *net = new XRCLIENT(XREMOTE_PACKET_SIZE, filter, XREMOTE_BIND_HOST, XREMOTE_CLIENT_PORT, remotehost, remoteport, displayName);
+
+		client = net;
+		if (!net->main()) {
+			delete net;
+			printf("xremote is closed with an error.\n");
+			return 2;
+		}
+		delete net;
 	} else if (strcmp(argv[argi], "--server") == 0) {
 		// check command-line validity
 		if (argc > (argi + 3)) {
@@ -114,20 +135,19 @@ int main(int argc, char *argv[]) {
 		}
 
 		// setup xremote server
-		localxr = xr = new XRSERVERTEST(localhost, localport, displayName);
+		XRSERVER *net = new XRSERVER(XREMOTE_PACKET_SIZE, filter, localhost, localport, displayName);
+
+		server = net;
+		if (!net->main()) {
+			delete net;
+			printf("xremote is closed with an error.\n");
+			return 2;
+		}
+		delete net;
 	} else {
 		printUsage();
 		return 1;
 	}
-	localxr->setEncryptionKey(password);
-
-	printf("xremote - %s - by nitro.tm@gmail.com\n", XREMOTE_VERSION);
-	if (localxr->main()) {
-		delete localxr;
-		printf("xremote is closed.\n");
-		return 0;
-	}
-	delete localxr;
-	printf("xremote is closed with an error.\n");
-	return -1;
+	printf("xremote is closed.\n");
+	return 0;
 }
