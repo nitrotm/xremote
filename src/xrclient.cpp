@@ -167,7 +167,7 @@ bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETNOTIFYEVENT *event) {
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event) {
-	printf("send[%s]: port=%d, type=ptr(%d), button=%d, x=%d, y=%d\n", meta.getRemoteHost().c_str(), event->type, event->port, event->button, event->x, event->y);
+	printf("send[%s]: port=%d, type=ptr(%d), button=%d, x=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->button, event->x, event->y);
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
@@ -439,7 +439,7 @@ bool XRCLIENT::processXEvent(const XEvent &xev) {
 bool XRCLIENT::acquire(int y, int flags) {
 	XRLOCKER locker(&this->lock);
 
-/*	if (!this->isGrabbing()) {
+	if (!this->isGrabbing()) {
 		// start grab inputs
 		if (!this->grabInput()) {
 			return false;
@@ -454,14 +454,14 @@ bool XRCLIENT::acquire(int y, int flags) {
 		this->askSelection(XA_PRIMARY);
 		this->askSelection(XA_SECONDARY);
 		this->askSelection(this->getClipboardAtom());
-	}*/
+	}
 	return true;
 }
 
 bool XRCLIENT::release(int y, int flags) {
 	XRLOCKER locker(&this->lock);
 
-/*	if (this->isGrabbing()) {
+	if (this->isGrabbing()) {
 		// stop grabbing inputs
 		if (!this->ungrabInput()) {
 			return false;
@@ -477,6 +477,6 @@ bool XRCLIENT::release(int y, int flags) {
 
 			return firstScreen.setPointer(1, y);
 		}
-	}*/
+	}
 	return true;
 }

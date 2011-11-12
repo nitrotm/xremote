@@ -83,6 +83,8 @@ using namespace std;
 #define XRBUFFER_CLIPBOARDBUFFER 0x03
 
 
+#pragma pack(push, 1)
+
 /**
  * Network event message structure (3+5 bytes)
  *
@@ -138,6 +140,8 @@ typedef struct {
 	unsigned char  code;
 	unsigned int   size;
 } XRNETBUFFEREVENT;
+
+#pragma pack(pop)
 
 
 /**
