@@ -122,6 +122,7 @@ bool XRSERVER::main(bool debug) {
 	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
 		if (it->second) {
 			XRNETPTREVENT event = {
+				0,
 				XREVENT_PTR_UP,
 				it->first,
 				0,
@@ -136,6 +137,7 @@ bool XRSERVER::main(bool debug) {
 	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
 		if (it->second) {
 			XRNETKBDEVENT event = {
+				0,
 				XREVENT_KBD_UP,
 				it->first
 			};
@@ -596,6 +598,7 @@ bool XRSERVER::release(int y, int flags) {
 	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
 		if (it->second) {
 			XRNETPTREVENT event = {
+				0,
 				XREVENT_PTR_UP,
 				it->first,
 				0,
@@ -610,6 +613,7 @@ bool XRSERVER::release(int y, int flags) {
 	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
 		if (it->second) {
 			XRNETKBDEVENT event = {
+				0,
 				XREVENT_KBD_UP,
 				it->first
 			};
