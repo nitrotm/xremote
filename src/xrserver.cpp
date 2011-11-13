@@ -285,7 +285,7 @@ bool XRSERVER::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 					notifyev->y
 				};
 
-				this->sendEvent(this->meta, &event);
+				this->sendEvent(clientMeta, &event);
 			}
 		}
 		break;
