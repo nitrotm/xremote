@@ -42,6 +42,7 @@ protected:
 		}
 	};
 
+	bool                     debug;
 	bool                     allows;
 	map<int, bool>           buttons;
 	map<unsigned int, bool>  keys;

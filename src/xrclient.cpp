@@ -13,7 +13,7 @@
 #include "xrclient.h"
 
 
-XRCLIENT::XRCLIENT(int packetSize, XRNETFILTER *first, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort, const string &displayName) : XRNETUDP(packetSize, first, localHost, localPort, remoteHost, remotePort), XRWINDOW(displayName), allows(false), alive(time(NULL)), lastCheck(time(NULL)) {
+XRCLIENT::XRCLIENT(int packetSize, XRNETFILTER *first, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort, const string &displayName) : XRNETUDP(packetSize, first, localHost, localPort, remoteHost, remotePort), XRWINDOW(displayName), debug(false), allows(false), alive(time(NULL)), lastCheck(time(NULL)) {
 }
 
 XRCLIENT::~XRCLIENT() {
@@ -162,17 +162,23 @@ bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETEVENT *event) {
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETNOTIFYEVENT *event) {
-	printf("send[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->flags, event->y);
+	if (this->debug) {
+		printf("send[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->flags, event->y);
+	}
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event) {
-	printf("send[%s]: port=%d, type=ptr(%d), button=%d, x=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->button, event->x, event->y);
+	if (this->debug) {
+		printf("send[%s]: port=%d, type=ptr(%d), button=%d, x=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->button, event->x, event->y);
+	}
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETKBDEVENT *event) {
-	printf("send[%s]: port=%d, type=kbd(%d), keycode=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->keycode);
+	if (this->debug) {
+		printf("send[%s]: port=%d, type=kbd(%d), keycode=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->keycode);
+	}
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 /*
@@ -193,16 +199,18 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 
 	buffer.get(0, sizeof(XRNETEVENT), &header);
 
-	switch (header.type) {
-	case XREVENT_ACQUIRE:
-	case XREVENT_RELEASE:
-	case XREVENT_ALIVE:
-		{
-			XRNETNOTIFYEVENT *notifyev = (XRNETNOTIFYEVENT*)&header;
-
-			printf("recv[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), notifyev->port, notifyev->type, notifyev->flags, notifyev->y);
+	if (this->debug) {
+		switch (header.type) {
+		case XREVENT_ACQUIRE:
+		case XREVENT_RELEASE:
+		case XREVENT_ALIVE:
+			{
+				XRNETNOTIFYEVENT *notifyev = (XRNETNOTIFYEVENT*)&header;
+	
+				printf("recv[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), notifyev->port, notifyev->type, notifyev->flags, notifyev->y);
+			}
+			break;
 		}
-		break;
 	}
 
 	// check server address

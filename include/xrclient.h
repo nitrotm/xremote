@@ -20,6 +20,7 @@ private:
 
 
 protected:
+	bool   debug;
 	bool   allows;
 	time_t alive;
 	time_t lastCheck;
