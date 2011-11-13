@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 //	signal(SIGHUP, shutdown);
 	signal(SIGQUIT, shutdown);
 	signal(SIGTERM, shutdown);
-//	signal(SIGINT, shutdown);
+	signal(SIGINT, shutdown);
 //	signal(SIGABRT, shutdown);
 
 	// prepare filter
