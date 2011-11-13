@@ -118,6 +118,32 @@ bool XRSERVER::main(bool debug) {
 	}
 	this->allows = false;
 
+	// reset buttons down
+	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
+		if (it->second) {
+			XRNETPTREVENT event = {
+				XREVENT_PTR_UP,
+				it->first,
+				0,
+				0
+			};
+	
+			this->processButtonEvent(&event);
+		}
+	}
+
+	// reset keys down
+	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
+		if (it->second) {
+			XRNETKBDEVENT event = {
+				XREVENT_KBD_UP,
+				it->first
+			};
+
+			this->processKbdEvent(&event);
+		}
+	}
+
 	// stop grabbing inputs
 	if (!this->ungrabInput()) {
 		printf("xremote: error in ungrabInput()\n");
