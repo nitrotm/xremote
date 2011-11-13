@@ -20,9 +20,11 @@ XRSERVER::~XRSERVER() {
 }
 
 
-bool XRSERVER::main() {
+bool XRSERVER::main(bool debug) {
 	XRLOCKER locker(&this->lock);
-	bool		 code = true;
+	bool code = true;
+
+	this->debug = debug;
 
 	// check if XTest exists
 	int eventBase = 0;

@@ -40,7 +40,7 @@ public:
 	virtual ~XRCLIENT();
 
 
-	virtual bool main();
+	virtual bool main(bool debug = false);
 	virtual void abort();
 };
 

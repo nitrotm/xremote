@@ -20,9 +20,11 @@ XRCLIENT::~XRCLIENT() {
 }
 
 
-bool XRCLIENT::main() {
+bool XRCLIENT::main(bool debug) {
 	XRLOCKER locker(&this->lock);
 	bool code = true;
+
+	this->debug = debug;
 
 	// create socket
 	if (!this->createSocket()) {

@@ -19,8 +19,8 @@ XRSERVER *server = NULL;
 
 
 void printUsage() {
-	printf("usage: xremote [-p] --client serverhost [serverport]\n");
-	printf("       xremote [-p] --server listenhost [listenport]\n");
+	printf("usage: xremote [-d] [-p] --client serverhost [serverport]\n");
+	printf("       xremote [-d] [-p] --server listenhost [listenport]\n");
 }
 
 void shutdown(int sig) {
@@ -36,6 +36,13 @@ void shutdown(int sig) {
 
 
 int main(int argc, char *argv[]) {
+	int argi = 1;
+
+	printf("xremote - v%s - by nitro.tm@gmail.com\n", XREMOTE_VERSION);
+
+	// set random seed
+	srand(time(NULL));
+
 	// get display name
 	char *displayName = getenv("DISPLAY");
 
@@ -45,19 +52,27 @@ int main(int argc, char *argv[]) {
 	}
 
 	// check command-line validity
-	printf("xremote - v%s - by nitro.tm@gmail.com\n", XREMOTE_VERSION);
-
-	if (argc < 3) {
+	if (argc - argi < 2) {
 		printUsage();
 		return 1;
 	}
 
-	// set random seed
-	srand(time(NULL));
+	// enable debugging
+	bool debug = false;
+
+	if (strcmp(argv[argi], "-d") == 0) {
+		debug = true;
+		argi++;
+	}
+
+	// check command-line validity
+	if (argc - argi < 2) {
+		printUsage();
+		return 1;
+	}
 
 	// read encryption key from stdin
 	string password;
-	int argi = 1;
 
 	if (strcmp(argv[argi], "-p") == 0) {
 		int c;
@@ -69,13 +84,13 @@ int main(int argc, char *argv[]) {
 			}
 			password += (char)c;
 		}
-
-		// check command-line validity
 		argi++;
-		if (argc < 4) {
-			printUsage();
-			return 1;
-		}
+	}
+
+	// check command-line validity
+	if (argc - argi < 2) {
+		printUsage();
+		return 1;
 	}
 
 	// register quit/term signals
@@ -113,7 +128,7 @@ int main(int argc, char *argv[]) {
 		XRCLIENT *net = new XRCLIENT(XREMOTE_PACKET_SIZE, filter, XREMOTE_BIND_HOST, XREMOTE_CLIENT_PORT, remotehost, remoteport, displayName);
 
 		client = net;
-		if (!net->main()) {
+		if (!net->main(debug)) {
 			delete net;
 			printf("xremote is closed with an error.\n");
 			return 2;
@@ -138,7 +153,7 @@ int main(int argc, char *argv[]) {
 		XRSERVER *net = new XRSERVER(XREMOTE_PACKET_SIZE, filter, localhost, localport, displayName);
 
 		server = net;
-		if (!net->main()) {
+		if (!net->main(debug)) {
 			delete net;
 			printf("xremote is closed with an error.\n");
 			return 2;
