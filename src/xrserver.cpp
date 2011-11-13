@@ -219,7 +219,7 @@ bool XRSERVER::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 		case XREVENT_KBD_UP:
 			{
 				XRNETKBDEVENT *kbdev = (XRNETKBDEVENT*)&header;
-	
+
 				printf("recv[%s]: port=%d, type=kbd(%d), keycode=%d\n", meta.getRemoteHost().c_str(), kbdev->port, kbdev->type, kbdev->keycode);
 			}
 			break;
@@ -524,11 +524,11 @@ bool XRSERVER::processButtonEvent(XRNETPTREVENT *event) {
 
 bool XRSERVER::processKbdEvent(XRNETKBDEVENT *event) {
 	switch (event->type) {
-	case XREVENT_PTR_DOWN:
+	case XREVENT_KBD_DOWN:
 		XTestFakeKeyEvent(this->display, event->keycode, True, CurrentTime);
 		break;
 
-	case XREVENT_PTR_UP:
+	case XREVENT_KBD_UP:
 		XTestFakeKeyEvent(this->display, event->keycode, False, CurrentTime);
 		break;
 	}
