@@ -111,9 +111,11 @@ bool XRSERVER::main(bool debug) {
 					}
 				}
 			}
-		}
-		if (this->clients.size() == 0) {
-			this->release();
+			if (this->clients.size() == 0) {
+				this->release();
+			}
+		} else {
+			locker.usleep(10000);
 		}
 	}
 	this->allows = false;
@@ -568,47 +570,49 @@ bool XRSERVER::processKbdEvent(XRNETKBDEVENT *event) {
 bool XRSERVER::acquire(int y, int flags) {
 	XRLOCKER locker(&this->lock);
 	
-	// stop grabbing inputs
-	if (!this->ungrabInput()) {
-		return false;
-	}
-
-	// set pointer position
-	if ((flags & XRNOTIFY_LEFT) == XRNOTIFY_LEFT) {
-		XRSCREEN lastScreen(this->getScreen(this->getScreenCount() - 1));
-
-		return lastScreen.setPointer(lastScreen.getWidth() - 2, y);
-	} else if ((flags & XRNOTIFY_RIGHT) == XRNOTIFY_RIGHT) {
-		XRSCREEN firstScreen(this->getScreen(0));
-
-		return firstScreen.setPointer(1, y);
-	}
-
-	// set buttons
-	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
-		if (it->second) {
-			XRNETPTREVENT event = {
-				0,
-				XREVENT_PTR_DOWN,
-				it->first,
-				0,
-				0
-			};
-
-			this->processButtonEvent(&event);
+	if (this->isGrabbing()) {
+		// stop grabbing inputs
+		if (!this->ungrabInput()) {
+			return false;
 		}
-	}
-
-	// set keys
-	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
-		if (it->second) {
-			XRNETKBDEVENT event = {
-				0,
-				XREVENT_KBD_DOWN,
-				it->first
-			};
-
-			this->processKbdEvent(&event);
+	
+		// set pointer position
+		if ((flags & XRNOTIFY_LEFT) == XRNOTIFY_LEFT) {
+			XRSCREEN lastScreen(this->getScreen(this->getScreenCount() - 1));
+	
+			return lastScreen.setPointer(lastScreen.getWidth() - 2, y);
+		} else if ((flags & XRNOTIFY_RIGHT) == XRNOTIFY_RIGHT) {
+			XRSCREEN firstScreen(this->getScreen(0));
+	
+			return firstScreen.setPointer(1, y);
+		}
+	
+		// set buttons
+		for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
+			if (it->second) {
+				XRNETPTREVENT event = {
+					0,
+					XREVENT_PTR_DOWN,
+					it->first,
+					0,
+					0
+				};
+	
+				this->processButtonEvent(&event);
+			}
+		}
+	
+		// set keys
+		for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
+			if (it->second) {
+				XRNETKBDEVENT event = {
+					0,
+					XREVENT_KBD_DOWN,
+					it->first
+				};
+	
+				this->processKbdEvent(&event);
+			}
 		}
 	}
 	return true;
@@ -617,42 +621,44 @@ bool XRSERVER::acquire(int y, int flags) {
 bool XRSERVER::release(int y, int flags) {
 	XRLOCKER locker(&this->lock);
 
-	// grab selection
-	this->askSelection(XA_PRIMARY);
-	this->askSelection(XA_SECONDARY);
-	this->askSelection(this->getClipboardAtom());
-
-	// reset buttons
-	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
-		if (it->second) {
-			XRNETPTREVENT event = {
-				0,
-				XREVENT_PTR_UP,
-				it->first,
-				0,
-				0
-			};
-
-			this->processButtonEvent(&event);
+	if (!this->isGrabbing()) {
+		// reset buttons
+		for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
+			if (it->second) {
+				XRNETPTREVENT event = {
+					0,
+					XREVENT_PTR_UP,
+					it->first,
+					0,
+					0
+				};
+	
+				this->processButtonEvent(&event);
+			}
 		}
-	}
 
-	// reset keys
-	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
-		if (it->second) {
-			XRNETKBDEVENT event = {
-				0,
-				XREVENT_KBD_UP,
-				it->first
-			};
-
-			this->processKbdEvent(&event);
+		// reset keys
+		for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
+			if (it->second) {
+				XRNETKBDEVENT event = {
+					0,
+					XREVENT_KBD_UP,
+					it->first
+				};
+	
+				this->processKbdEvent(&event);
+			}
 		}
-	}
 
-	// start grab inputs
-	if (!this->grabInput()) {
-		return false;
+		// start grab inputs
+		if (!this->grabInput()) {
+			return false;
+		}
+
+		// grab selection
+		this->askSelection(XA_PRIMARY);
+		this->askSelection(XA_SECONDARY);
+		this->askSelection(this->getClipboardAtom());
 	}
 	return true;
 }

@@ -163,6 +163,5 @@ int main(int argc, char *argv[]) {
 		printUsage();
 		return 1;
 	}
-	printf("xremote is closed.\n");
 	return 0;
 }
