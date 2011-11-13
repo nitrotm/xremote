@@ -583,6 +583,34 @@ bool XRSERVER::acquire(int y, int flags) {
 
 		return firstScreen.setPointer(1, y);
 	}
+
+	// set buttons
+	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
+		if (it->second) {
+			XRNETPTREVENT event = {
+				0,
+				XREVENT_PTR_DOWN,
+				it->first,
+				0,
+				0
+			};
+
+			this->processButtonEvent(&event);
+		}
+	}
+
+	// set keys
+	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
+		if (it->second) {
+			XRNETKBDEVENT event = {
+				0,
+				XREVENT_KBD_DOWN,
+				it->first
+			};
+
+			this->processKbdEvent(&event);
+		}
+	}
 	return true;
 }
 
@@ -594,7 +622,7 @@ bool XRSERVER::release(int y, int flags) {
 	this->askSelection(XA_SECONDARY);
 	this->askSelection(this->getClipboardAtom());
 
-	// reset buttons down
+	// reset buttons
 	for (map<int, bool>::iterator it = this->buttons.begin(); it != this->buttons.end(); ++it) {
 		if (it->second) {
 			XRNETPTREVENT event = {
@@ -604,12 +632,12 @@ bool XRSERVER::release(int y, int flags) {
 				0,
 				0
 			};
-	
+
 			this->processButtonEvent(&event);
 		}
 	}
 
-	// reset keys down
+	// reset keys
 	for (map<unsigned int, bool>::iterator it = this->keys.begin(); it != this->keys.end(); ++it) {
 		if (it->second) {
 			XRNETKBDEVENT event = {
