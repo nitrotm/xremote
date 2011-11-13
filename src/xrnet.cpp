@@ -353,7 +353,7 @@ bool XRNETBUFFERQUEUE::complete() const {
 
 
 
-XRNET::XRNET(int packetSize, XRNETFILTER *first) : packetSize(packetSize), first(first), last(NULL), sendId(0) {
+XRNET::XRNET(int packetSize, XRNETFILTER *first) : packetSize(packetSize), first(first), last(NULL), sendId(0), verbosity(XREMOTE_LOG_NONE) {
 	while (first != NULL) {
 		this->last = first;
 		first = first->getLower();
@@ -450,7 +450,6 @@ bool XRNET::receive(XRNETPACKET *packet) {
 	XRNETPACKETHEADER packetHeader;
 
 	buffer.get(0, sizeof(XRNETPACKETHEADER), &packetHeader);
-//	printf("recv: id=%d, seq=%d, size=%d\n", packetHeader.id, packetHeader.seq, packetHeader.size);
 
 	// create buffer queue?
 	map<unsigned char, XRNETBUFFERQUEUE>::iterator recvIt = this->recvQueue.find(packetHeader.id);
@@ -460,7 +459,9 @@ bool XRNET::receive(XRNETPACKET *packet) {
 		return true;
 	}
 	if (recvIt == this->recvQueue.end()) {
-		printf("ERR: lost buffer sequence: %d.%d\n", packetHeader.id, packetHeader.seq);
+		if (this->isVerbose(XREMOTE_LOG_DROP)) {
+			printf("ERR: lost buffer sequence: %d.%d\n", packetHeader.id, packetHeader.seq);
+		}
 		return false;
 	}
 
@@ -470,7 +471,9 @@ bool XRNET::receive(XRNETPACKET *packet) {
 	if (!queue.add(packet)) {
 		this->recvQueue.erase(recvIt);
 
-		printf("ERR: corrupted buffer sequence: %d.%d\n", packetHeader.id);
+		if (this->isVerbose(XREMOTE_LOG_DROP)) {
+			printf("ERR: corrupted buffer sequence: %d.%d\n", packetHeader.id, packetHeader.seq);
+		}
 		return false;
 	}
 	if (queue.complete()) {
@@ -484,7 +487,9 @@ bool XRNET::send(const XRNETPACKETMETA &meta, const XRNETBUFFER &data) {
 	int rawSize = this->getRawSize() - sizeof(XRNETPACKETHEADER);
 
 	if (rawSize < (int)sizeof(XRNETBUFFERHEADER)) {
-		printf("ERR: packet size is too small\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("ERR: packet size is too small\n");
+		}
 		return false;
 	}
 
@@ -554,6 +559,13 @@ bool XRNET::receiveAll(long timeout) {
 	return (code >= 0);
 }
 
+bool XRNET::isVerbose(int level) const {
+	return ((this->verbosity & level) == level);
+}
+
+void XRNET::setVerbosity(int level) {
+	this->verbosity = level;
+}
 
 
 XRNETFILTER::XRNETFILTER(XRNETFILTER *child) : lower(NULL), upper(NULL) {
@@ -590,7 +602,9 @@ bool XRNETCHECKSUMFILTER::onReceivePacket(XRNET *net, XRNETPACKET *packet) {
 	const XRNETBUFFER & buffer = packet->getBuffer();
 
 	if (buffer.length() < this->getHeaderSize()) {
-		printf("ERR: packet size is too small\n");
+		if (net->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("ERR: packet size is too small\n");
+		}
 		return false;
 	}
 
@@ -608,7 +622,9 @@ bool XRNETCHECKSUMFILTER::onReceivePacket(XRNET *net, XRNETPACKET *packet) {
 	unsigned int localSum = outBuffer.checksum();
 
 	if (remoteSum != localSum) {
-		printf("ERR: chksum failed (%08X != %08X) !\n", remoteSum, localSum);
+		if (net->isVerbose(XREMOTE_LOG_DROP)) {
+			printf("ERR: chksum failed (%08X != %08X) !\n", remoteSum, localSum);
+		}
 		return false;
 	}
 
@@ -660,7 +676,9 @@ bool XRNETCRYPTFILTER::onReceivePacket(XRNET *net, XRNETPACKET *packet) {
 	XRNETBUFFER &buffer = packet->getBuffer();
 
 	if (buffer.length() % 16 != 0) {
-		printf("ERR: packet size is not rounded to 16 bytes (%d bytes)\n", buffer.length());
+		if (net->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("ERR: packet size is not rounded to 16 bytes (%d bytes)\n", buffer.length());
+		}
 		return false;
 	}
 
@@ -680,7 +698,9 @@ bool XRNETCRYPTFILTER::onSendPacket(XRNET *net, XRNETPACKET *packet) {
 	XRNETBUFFER &buffer = packet->getBuffer();
 
 	if (buffer.length() % 16 != 0) {
-		printf("ERR: packet size is not rounded to 16 bytes (%d bytes)\n", buffer.length());
+		if (net->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("ERR: packet size is not rounded to 16 bytes (%d bytes)\n", buffer.length());
+		}
 		return false;
 	}
 

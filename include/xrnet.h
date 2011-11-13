@@ -150,6 +150,7 @@ private:
 
 protected:
 	XRLOCK lock;
+	int    verbosity;
 
 	virtual int getPacketSize() const;
 	virtual int getRawSize() const;
@@ -174,6 +175,9 @@ public:
 
 	virtual bool send(const XRNETPACKETMETA &meta, const XRNETBUFFER &str);
 	virtual bool receiveAll(long timeout = XREMOTE_READ_TIMEOUT);
+
+	virtual bool isVerbose(int level) const;
+	virtual void setVerbosity(int level);
 };
 
 

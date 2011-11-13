@@ -58,6 +58,12 @@ using namespace std;
 #include <X11/extensions/XTest.h>
 
 
+// log levels
+#define XREMOTE_LOG_NONE      0x00
+#define XREMOTE_LOG_FAIL      0x01
+#define XREMOTE_LOG_DROP      0x02
+#define XREMOTE_LOG_PACKET    0x04
+
 // event types
 #define XREVENT_NONE     0x00
 #define XREVENT_ACQUIRE  0x01

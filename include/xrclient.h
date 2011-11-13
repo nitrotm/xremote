@@ -20,7 +20,6 @@ private:
 
 
 protected:
-	bool   debug;
 	bool   allows;
 	time_t alive;
 	time_t lastCheck;
@@ -40,7 +39,7 @@ public:
 	virtual ~XRCLIENT();
 
 
-	virtual bool main(bool debug = false);
+	virtual bool main();
 	virtual void abort();
 };
 

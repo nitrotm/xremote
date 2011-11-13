@@ -19,8 +19,8 @@ XRSERVER *server = NULL;
 
 
 void printUsage() {
-	printf("usage: xremote [-d] [-p] --client serverhost [serverport]\n");
-	printf("       xremote [-d] [-p] --server listenhost [listenport]\n");
+	printf("usage: xremote [-v] [-d] [-p] --client serverhost [serverport]\n");
+	printf("       xremote [-v] [-d] [-p] --server listenhost [listenport]\n");
 }
 
 void shutdown(int sig) {
@@ -37,6 +37,7 @@ void shutdown(int sig) {
 
 int main(int argc, char *argv[]) {
 	int argi = 1;
+	int verbosity = XREMOTE_LOG_FAIL;
 
 	printf("xremote - v%s - by nitro.tm@gmail.com\n", XREMOTE_VERSION);
 
@@ -57,11 +58,21 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// enable debugging
-	bool debug = false;
+	// enable verbose mode
+	if (strcmp(argv[argi], "-v") == 0) {
+		verbosity |= XREMOTE_LOG_DROP;
+		argi++;
+	}
 
+	// check command-line validity
+	if (argc - argi < 2) {
+		printUsage();
+		return 1;
+	}
+
+	// enable debugging
 	if (strcmp(argv[argi], "-d") == 0) {
-		debug = true;
+		verbosity |= XREMOTE_LOG_PACKET;
 		argi++;
 	}
 
@@ -127,10 +138,10 @@ int main(int argc, char *argv[]) {
 		// setup xremote client
 		XRCLIENT *net = new XRCLIENT(XREMOTE_PACKET_SIZE, filter, XREMOTE_BIND_HOST, XREMOTE_CLIENT_PORT, remotehost, remoteport, displayName);
 
+		net->setVerbosity(verbosity);
 		client = net;
-		if (!net->main(debug)) {
+		if (!net->main()) {
 			delete net;
-			printf("xremote is closed with an error.\n");
 			return 2;
 		}
 		delete net;
@@ -152,10 +163,10 @@ int main(int argc, char *argv[]) {
 		// setup xremote server
 		XRSERVER *net = new XRSERVER(XREMOTE_PACKET_SIZE, filter, localhost, localport, displayName);
 
+		net->setVerbosity(verbosity);
 		server = net;
-		if (!net->main(debug)) {
+		if (!net->main()) {
 			delete net;
-			printf("xremote is closed with an error.\n");
 			return 2;
 		}
 		delete net;

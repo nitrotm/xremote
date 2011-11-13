@@ -13,34 +13,38 @@
 #include "xrclient.h"
 
 
-XRCLIENT::XRCLIENT(int packetSize, XRNETFILTER *first, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort, const string &displayName) : XRNETUDP(packetSize, first, localHost, localPort, remoteHost, remotePort), XRWINDOW(displayName), debug(false), allows(false), alive(time(NULL)), lastCheck(time(NULL)) {
+XRCLIENT::XRCLIENT(int packetSize, XRNETFILTER *first, const string &localHost, in_port_t localPort, const string &remoteHost, in_port_t remotePort, const string &displayName) : XRNETUDP(packetSize, first, localHost, localPort, remoteHost, remotePort), XRWINDOW(displayName), allows(false), alive(time(NULL)), lastCheck(time(NULL)) {
 }
 
 XRCLIENT::~XRCLIENT() {
 }
 
 
-bool XRCLIENT::main(bool debug) {
+bool XRCLIENT::main() {
 	XRLOCKER locker(&this->lock);
 	bool code = true;
 
-	this->debug = debug;
-
 	// create socket
 	if (!this->createSocket()) {
-		printf("xremote: error in createSocket()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in createSocket()\n");
+		}
 		code = false;
 	}
 
 	// create window
 	if (!this->createWindow(0, 0, 1, 1)) {
-		printf("xremote: error in createWindow()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in createWindow()\n");
+		}
 		code = false;
 	}
 
 	// create cursor
 	if (!this->createCursor()) {
-		printf("xremote: error in createCursor()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in createCursor()\n");
+		}
 		code = false;
 	}
 
@@ -49,19 +53,25 @@ bool XRCLIENT::main(bool debug) {
 	while (this->allows && code) {
 		// receive all event from network
 		if (!this->receiveAll()) {
-			printf("xremote: error in receiveAll()\n");
+			if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+				printf("xremote: error in receiveAll()\n");
+			}
 			code = false;
 		}
 
 		// fetch next X events
 		if (!this->pollXEvents()) {
-			printf("xremote: error in pollXEvents()\n");
+			if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+				printf("xremote: error in pollXEvents()\n");
+			}
 			code = false;
 		}
 
 		// send all event to network
 		if (!this->sendAll()) {
-			printf("xremote: error in sendAll()\n");
+			if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+				printf("xremote: error in sendAll()\n");
+			}
 			code = false;
 		}
 
@@ -72,7 +82,9 @@ bool XRCLIENT::main(bool debug) {
 
 				if ((time(NULL) - this->alive) >= XREMOTE_DEAD_CHECK) {
 					if (!this->release()) {
-						printf("xremote: error in release()\n");
+						if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+							printf("xremote: error in release()\n");
+						}
 						code = false;
 					}
 					this->centerPointerOnScreen();
@@ -128,25 +140,33 @@ bool XRCLIENT::main(bool debug) {
 
 	// stop grabbing inputs
 	if (!this->ungrabInput()) {
-		printf("xremote: error in ungrabInput()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in ungrabInput()\n");
+		}
 		code = false;
 	}
 
 	// destroy cursor
 	if (!this->destroyCursor()) {
-		printf("xremote: error in destroyCursor()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in destroyCursor()\n");
+		}
 		code = false;
 	}
 
 	// destroy window
 	if (!this->destroyWindow()) {
-		printf("xremote: error in destroyWindow()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in destroyWindow()\n");
+		}
 		code = false;
 	}
 
 	// destroy socket
 	if (!this->destroySocket()) {
-		printf("xremote: error in destroySocket()\n");
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("xremote: error in destroySocket()\n");
+		}
 		code = false;
 	}
 	return code;
@@ -164,21 +184,21 @@ bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETEVENT *event) {
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETNOTIFYEVENT *event) {
-	if (this->debug) {
+	if (this->isVerbose(XREMOTE_LOG_PACKET)) {
 		printf("send[%s]: port=%d, type=notify(%d), flags=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->flags, event->y);
 	}
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETPTREVENT *event) {
-	if (this->debug) {
+	if (this->isVerbose(XREMOTE_LOG_PACKET)) {
 		printf("send[%s]: port=%d, type=ptr(%d), button=%d, x=%d, y=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->button, event->x, event->y);
 	}
 	return this->sendEvent(meta, (XRNETEVENT*)event);
 }
 
 bool XRCLIENT::sendEvent(const XRNETPACKETMETA &meta, XRNETKBDEVENT *event) {
-	if (this->debug) {
+	if (this->isVerbose(XREMOTE_LOG_PACKET)) {
 		printf("send[%s]: port=%d, type=kbd(%d), keycode=%d\n", meta.getRemoteHost().c_str(), event->port, event->type, event->keycode);
 	}
 	return this->sendEvent(meta, (XRNETEVENT*)event);
@@ -201,7 +221,7 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 
 	buffer.get(0, sizeof(XRNETEVENT), &header);
 
-	if (this->debug) {
+	if (this->isVerbose(XREMOTE_LOG_PACKET)) {
 		switch (header.type) {
 		case XREVENT_ACQUIRE:
 		case XREVENT_RELEASE:
@@ -217,7 +237,9 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 
 	// check server address
 	if (meta.getRemoteAddress() != this->meta.getRemoteAddress() || header.port != this->meta.getRemotePort()) {
-		printf("xremote: invalid server address (%s, %d)\n", meta.getRemoteHost().c_str(), header.port);
+		if (this->isVerbose(XREMOTE_LOG_DROP)) {
+			printf("xremote: invalid server address (%s, %d)\n", meta.getRemoteHost().c_str(), header.port);
+		}
 		return false;
 	}
 	this->alive = time(NULL);
@@ -308,7 +330,9 @@ bool XRCLIENT::onReceive(const XRNETPACKETMETA &meta, const XRNETBUFFER &buffer)
 		break;*/
 
 	default:
-		printf("xremote: unknown message (%d)\n", header.type);
+		if (this->isVerbose(XREMOTE_LOG_DROP)) {
+			printf("xremote: unknown message (%d)\n", header.type);
+		}
 		break;
 	}
 	return true;

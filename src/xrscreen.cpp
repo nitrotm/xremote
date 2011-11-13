@@ -59,41 +59,17 @@ bool XRSCREEN::getPointer(Window *child, int *x, int *y) const {
 	int wndX = 0;
 	int wndY = 0;
 
-	if (XQueryPointer(
-						this->display,
-						this->getRootWindow(),
-						&root,
-						child,
-						x,
-						y,
-						&wndX,
-						&wndY,
-						&mask
-					) == True) {
-		return true;
-	}
-	return false;
+	return (XQueryPointer(this->display, this->getRootWindow(), &root, child, x, y, &wndX, &wndY, &mask) == True);
 }
 
 bool XRSCREEN::setPointer(int x, int y) const {
-	XWarpPointer(
-		this->display,
-		None,
-		this->getRootWindow(),
-		0,
-		0,
-		0,
-		0,
-		x,
-		y
-	);
+	XWarpPointer(this->display, None, this->getRootWindow(), 0, 0, 0, 0, x, y);
+
 	this->flush();
 	return true;
 }
 
 
 void XRSCREEN::flush() const {
-	XFlush(
-		this->display
-	);
+	XFlush(this->display);
 }

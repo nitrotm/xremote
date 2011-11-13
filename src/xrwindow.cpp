@@ -57,18 +57,17 @@ bool XRWINDOW::createWindow(int x, int y, int width, int height) {
 		CWWinGravity | CWEventMask | CWDontPropagate | CWOverrideRedirect | CWCursor,
 		&attrs
 	);
+
 	this->flush();
 	return true;
 }
 
 bool XRWINDOW::destroyWindow() {
 	if (this->window != None) {
-		XDestroyWindow(
-			this->display,
-			this->window
-		);
+		XDestroyWindow(this->display, this->window);
 		this->window = None;
 	}
+
 	this->flush();
 	return true;
 }
@@ -76,72 +75,22 @@ bool XRWINDOW::destroyWindow() {
 
 bool XRWINDOW::createCursor() {
 	// create cursor source bitmap
-	Pixmap cursorSource = XCreatePixmap(
-		this->display,
-		this->window,
-		1,
-		1,
-		1
-	);
-	GC cursorSourceGC = XCreateGC(
-		this->display,
-		cursorSource,
-		0,
-		NULL
-	);
+	Pixmap cursorSource = XCreatePixmap(this->display, this->window, 1, 1, 1);
+	GC cursorSourceGC = XCreateGC(this->display, cursorSource, 0, NULL);
 
-	XSetBackground(
-		this->display,
-		cursorSourceGC,
-		0
-	);
-	XFillRectangle(
-		this->display,
-		cursorSource,
-		cursorSourceGC,
-		0,
-		0,
-		10,
-		10
-	);
-	XFreeGC(
-		this->display,
-		cursorSourceGC
-	);
+	XSetBackground(this->display, cursorSourceGC, 0);
+	XFillRectangle(this->display, cursorSource, cursorSourceGC, 0, 0, 10, 10);
+	XFreeGC(this->display, cursorSourceGC);
 
 	// create cursor from pixmap
-	XColor fg = {
-		0,
-		0xFFFF,
-		0xFFFF,
-		0xFFFF,
-		0,
-		0
-	};
-	XColor bg = {
-		0,
-		0x0000,
-		0x0000,
-		0x0000,
-		0,
-		0
-	};
+	XColor fg = { 0, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0 };
+	XColor bg = { 0, 0x0000, 0x0000, 0x0000, 0, 0 };
 
-	this->cursor = XCreatePixmapCursor(
-		this->display,
-		cursorSource,
-		cursorSource,
-		&fg,
-		&bg,
-		0,
-		0
-	);
+	this->cursor = XCreatePixmapCursor(this->display, cursorSource, cursorSource, &fg, &bg, 0, 0);
 
 	// free pixmap
-	XFreePixmap(
-		this->display,
-		cursorSource
-	);
+	XFreePixmap(this->display, cursorSource);
+
 	this->flush();
 	return true;
 }
@@ -151,6 +100,7 @@ bool XRWINDOW::destroyCursor() {
 		XFreeCursor(this->display, this->cursor);
 		this->cursor = None;
 	}
+
 	this->flush();
 	return true;
 }
@@ -161,16 +111,8 @@ bool XRWINDOW::grabInput() {
 		return false;
 	}
 	if (!this->grab) {
-		XMapWindow(
-			this->display,
-			this->window
-		);
-		XSetInputFocus(
-			this->display,
-			this->window,
-			RevertToPointerRoot,
-			CurrentTime
-		);
+		XMapWindow(this->display, this->window);
+		XSetInputFocus(this->display, this->window, RevertToPointerRoot, CurrentTime);
 		if (XGrabPointer(
 				this->display,
 				this->window,
@@ -185,18 +127,8 @@ bool XRWINDOW::grabInput() {
 			this->flush();
 			return false;
 		}
-		if (XGrabKeyboard(
-			this->display,
-			this->window,
-			False,
-			GrabModeAsync,
-			GrabModeAsync,
-			CurrentTime
-		) != GrabSuccess) {
-			XUngrabPointer(
-				this->display,
-				CurrentTime
-			);
+		if (XGrabKeyboard(this->display, this->window, False, GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess) {
+			XUngrabPointer(this->display, CurrentTime);
 			this->flush();
 			return false;
 		}
@@ -225,18 +157,10 @@ bool XRWINDOW::ungrabInput() {
 			XNextEvent(this->display, &xev);
 		}
 
-		XUngrabKeyboard(
-			this->display,
-			CurrentTime
-		);
-		XUngrabPointer(
-			this->display,
-			CurrentTime
-		);
-		XUnmapWindow(
-			this->display,
-			this->window
-		);
+		XUngrabKeyboard(this->display, CurrentTime);
+		XUngrabPointer(this->display, CurrentTime);
+		XUnmapWindow(this->display, this->window);
+
 		this->flush();
 		this->grab = false;
 	}
@@ -285,6 +209,7 @@ void XRWINDOW::askSelection(Atom selection) {
 		this->window,
 		CurrentTime
 	);
+
 	this->flush();
 }
 
@@ -310,12 +235,10 @@ string XRWINDOW::getSelection(Atom selection, Atom property) const {
 			&left,
 			&data
 		);
-		XDeleteProperty(
-			this->display,
-			this->window,
-			property
-		);
+		XDeleteProperty(this->display, this->window, property);
+
 		this->flush();
+
 		if (type == XA_STRING && format == 8 && nb > 0 && data != NULL) {
 			string buffer((char*)data);
 
@@ -324,7 +247,7 @@ string XRWINDOW::getSelection(Atom selection, Atom property) const {
 		} else if (data != NULL) {
 			XFree(data);
 		} else if (nb > 0) {
-			printf("error get property (type=%d, format=%d, nb=%d)\n", (int)type, format, (int)nb);
+//			printf("error get property (type=%d, format=%d, nb=%d)\n", (int)type, format, (int)nb);
 		}
 	}
 	return "";
@@ -340,12 +263,8 @@ void XRWINDOW::setSelection(Atom selection, const string &text) {
 	} else {
 		return;
 	}
-	XSetSelectionOwner(
-		this->display,
-		selection,
-		this->window,
-		CurrentTime
-	);
+	XSetSelectionOwner(this->display, selection, this->window, CurrentTime);
+
 	this->flush();
 }
 
@@ -388,19 +307,8 @@ void XRWINDOW::sendSelectionNotify(const XEvent &xev) {
 				list[0] = new char[text.length() + 1];
 				strcpy(list[0], text.c_str());
 	
-				if (XmbTextListToTextProperty(
-					this->display,
-					list,
-					1,
-					XCompoundTextStyle,
-					&prop
-				) >= 0) {
-					XSetTextProperty(
-						this->display,
-						requestor,
-						&prop,
-						property
-					);
+				if (XmbTextListToTextProperty(this->display, list, 1, XCompoundTextStyle, &prop) >= 0) {
+					XSetTextProperty(this->display, requestor, &prop, property);
 				} else {
 //					printf("special target (%s) not convertible\n", targetName);
 					property = None;
@@ -426,13 +334,8 @@ void XRWINDOW::sendSelectionNotify(const XEvent &xev) {
 	xev2.xselection.target = target;
 	xev2.xselection.property = property;
 	xev2.xselection.time = xev.xselectionrequest.time;
-	XSendEvent(
-		this->display,
-		requestor,
-		False,
-		0,
-		&xev2
-	);
+	XSendEvent(this->display, requestor, False, 0, &xev2);
+
 	this->flush();
 }
 

@@ -42,7 +42,6 @@ protected:
 		}
 	};
 
-	bool                     debug;
 	bool                     allows;
 	map<int, bool>           buttons;
 	map<unsigned int, bool>  keys;
@@ -66,7 +65,7 @@ public:
 	virtual ~XRSERVER();
 
 
-	virtual bool main(bool debug = false);
+	virtual bool main();
 	virtual void abort();
 };
 

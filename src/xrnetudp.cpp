@@ -95,7 +95,9 @@ int XRNETUDP::read(XRNETPACKET **packet, long timeout) {
 	memset(&sin, 0, sizeof(sin));
 	rb = recvfrom(this->s, buffer, this->getPacketSize(), 0, (struct sockaddr *)&sin, &sinLength);
 	if (rb != this->getPacketSize()) {
-		printf("ERR: size=%d, rb=%d, from=%s !\n", this->getPacketSize(), rb, inet_ntoa(sin.sin_addr));
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("ERR: size=%d, rb=%d, from=%s !\n", this->getPacketSize(), rb, inet_ntoa(sin.sin_addr));
+		}
 		return -2;
 	}
 
@@ -137,7 +139,9 @@ int XRNETUDP::write(const XRNETPACKET *packet, long timeout) {
 	sin.sin_port = htons(packet->getRemotePort());
 	sb = sendto(this->s, packet->getBuffer(), this->getPacketSize(), 0, (struct sockaddr *)&sin, sizeof(sin));
 	if (sb != this->getPacketSize()) {
-		printf("ERR: size=%d, sb=%d, to=%s !\n", this->getPacketSize(), sb, inet_ntoa(sin.sin_addr));
+		if (this->isVerbose(XREMOTE_LOG_FAIL)) {
+			printf("ERR: size=%d, sb=%d, to=%s !\n", this->getPacketSize(), sb, inet_ntoa(sin.sin_addr));
+		}
 		return -3;
 	}
 	return 1;
