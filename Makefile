@@ -1,9 +1,9 @@
 CC:=g++
 
-CFLAGS:=-pipe -c -g
+CFLAGS:=-pipe -c #-g
 INCLUDES:=-I/usr/include -Iinclude -Ithirdparty
 
-LDFLAGS:=-pipe -L/usr/lib -L/usr/X11R6/lib -lX11 -lXtst -lpthread #-lXext
+LDFLAGS:=-pipe -L/usr/lib -L/usr/X11R6/lib -lX11 -lXtst -lpthread
 
 OUTPUT:=xremote
 SRC_C:= \
